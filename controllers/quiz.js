@@ -96,12 +96,12 @@ exports.index = (req, res, next) => {
         });
     })
     .catch(error => next(error));
-    models.quiz.findAll()
-        .then(quizzes => {
-        res.render('quizzes/index.ejs', {quizzes});
-})
-.catch(error => next(error));
-};
+//    models.quiz.findAll()
+//        .then(quizzes => {
+//        res.render('quizzes/index.ejs', {quizzes});
+//})
+//.catch(error => next(error));
+//};
 
 
 // GET /quizzes/:quizId
@@ -195,15 +195,13 @@ exports.destroy = (req, res, next) => {
     req.quiz.destroy()
         .then(() => {
         req.flash('success', 'Quiz deleted successfully.');
-<<<<<<< HEAD
+
         res.redirect('/goback');
     })
-    .catch(error => {
-=======
-    res.redirect('/quizzes');
-})
+//    .catch(error => {
+//    res.redirect('/quizzes');
+//})
 .catch(error => {
->>>>>>> practica6
         req.flash('error', 'Error deleting the Quiz: ' + error.message);
     next(error);
 });
