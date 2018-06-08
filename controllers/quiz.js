@@ -14,14 +14,16 @@ exports.load = (req, res, next, quizId) => {
         ]
     })
     .then(quiz => {
+    models.quiz.findById(quizId)
+        .then(quiz => {
         if (quiz) {
             req.quiz = quiz;
             next();
         } else {
             throw new Error('There is no quiz with id=' + quizId);
-        }
-    })
-    .catch(error => next(error));
+}
+})
+.catch(error => next(error));
 };
 
 
@@ -94,6 +96,11 @@ exports.index = (req, res, next) => {
         });
     })
     .catch(error => next(error));
+    models.quiz.findAll()
+        .then(quizzes => {
+        res.render('quizzes/index.ejs', {quizzes});
+})
+.catch(error => next(error));
 };
 
 
@@ -110,7 +117,7 @@ exports.show = (req, res, next) => {
 exports.new = (req, res, next) => {
 
     const quiz = {
-        question: "", 
+        question: "",
         answer: ""
     };
 
@@ -134,17 +141,17 @@ exports.create = (req, res, next) => {
     quiz.save({fields: ["question", "answer", "authorId"]})
     .then(quiz => {
         req.flash('success', 'Quiz created successfully.');
-        res.redirect('/quizzes/' + quiz.id);
-    })
-    .catch(Sequelize.ValidationError, error => {
+    res.redirect('/quizzes/' + quiz.id);
+})
+.catch(Sequelize.ValidationError, error => {
         req.flash('error', 'There are errors in the form:');
-        error.errors.forEach(({message}) => req.flash('error', message));
-        res.render('quizzes/new', {quiz});
-    })
-    .catch(error => {
+    error.errors.forEach(({message}) => req.flash('error', message));
+    res.render('quizzes/new', {quiz});
+})
+.catch(error => {
         req.flash('error', 'Error creating a new Quiz: ' + error.message);
-        next(error);
-    });
+    next(error);
+});
 };
 
 
@@ -166,19 +173,19 @@ exports.update = (req, res, next) => {
     quiz.answer = body.answer;
 
     quiz.save({fields: ["question", "answer"]})
-    .then(quiz => {
+        .then(quiz => {
         req.flash('success', 'Quiz edited successfully.');
-        res.redirect('/quizzes/' + quiz.id);
-    })
-    .catch(Sequelize.ValidationError, error => {
+    res.redirect('/quizzes/' + quiz.id);
+})
+.catch(Sequelize.ValidationError, error => {
         req.flash('error', 'There are errors in the form:');
-        error.errors.forEach(({message}) => req.flash('error', message));
-        res.render('quizzes/edit', {quiz});
-    })
-    .catch(error => {
+    error.errors.forEach(({message}) => req.flash('error', message));
+    res.render('quizzes/edit', {quiz});
+})
+.catch(error => {
         req.flash('error', 'Error editing the Quiz: ' + error.message);
-        next(error);
-    });
+    next(error);
+});
 };
 
 
@@ -186,14 +193,20 @@ exports.update = (req, res, next) => {
 exports.destroy = (req, res, next) => {
 
     req.quiz.destroy()
-    .then(() => {
+        .then(() => {
         req.flash('success', 'Quiz deleted successfully.');
+<<<<<<< HEAD
         res.redirect('/goback');
     })
     .catch(error => {
+=======
+    res.redirect('/quizzes');
+})
+.catch(error => {
+>>>>>>> practica6
         req.flash('error', 'Error deleting the Quiz: ' + error.message);
-        next(error);
-    });
+    next(error);
+});
 };
 
 
@@ -224,4 +237,46 @@ exports.check = (req, res, next) => {
         result,
         answer
     });
+};
+
+exports.randomplay = (req, res, next) => {
+
+    req.session.toBePlayed = req.session.toBePlayed || [];
+    req.session.score = req.session.score || 0;
+    toBePlayed = req.session.toBePlayed;
+    score = req.session.score;
+    models.quiz.findOne({where: {id: {[Sequelize.Op.notIn] : toBePlayed }} ,order: [Sequelize.fn('RANDOM')] })
+        .then(quiz => {
+
+        if (quiz){
+            req.session.toBePlayed.push(quiz.id);
+            res.render('quizzes/random_play', {score, quiz});
+        } else {
+            delete req.session.toBePlayed;
+    delete req.session.score;
+    res.render('quizzes/random_nomore', {score})
+}
+})
+.catch(error => next(error));
+
+};
+
+exports.randomcheck = (req, res, next) => {
+
+    let score = req.session.score;
+    const {quiz, query} = req;
+    const answer = query.answer || "";
+
+    if (quiz.answer.trim().toLowerCase() === answer.trim().toLowerCase()){
+        req.session.score++;
+        score = req.session.score;
+        req.session.result = true;
+    } else {
+        delete req.session.toBePlayed;
+        req.session.score = 0;
+        req.session.result = false;
+    }
+
+    res.render('quizzes/random_result', {score, answer, result: req.session.result});
+
 };
